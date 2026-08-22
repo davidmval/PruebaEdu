@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Constructor de prompts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --negro:#000000;
+    --blanco:#FFFFFF;
+    --ambar:#E0A340;
+    --gris:#8A8A8A;
+    --linea:rgba(255,255,255,.14);
+    --ambar-tenue:rgba(224,163,64,.14);
+    --fuente:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--negro);
+    color:var(--blanco);
+    font-family:var(--fuente);
+    font-size:16px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  textarea{font-family:inherit}
+
+  .marco{height:100%;display:flex;flex-direction:column}
+
+  /* ================= cabecera ================= */
+  .cabecera{
+    flex:none;
+    display:flex;align-items:baseline;gap:20px;
+    padding:22px 28px 16px;
+    border-bottom:1px solid var(--linea);
+  }
+  .cabecera h1{font-weight:900;font-size:26px;letter-spacing:-.02em;text-transform:uppercase}
+  .contador{
+    margin-left:auto;display:flex;align-items:center;gap:10px;
+    color:var(--gris);font-size:13px;letter-spacing:.08em;
+    text-transform:uppercase;white-space:nowrap;
+  }
+  .pips{display:flex;gap:5px}
+  .pip{width:22px;height:4px;background:var(--linea);transition:background .2s ease}
+  .pip.on{background:var(--blanco)}
+  .pip.on.quinta{background:var(--ambar)}
+  .pip.aqui{box-shadow:0 0 0 1px var(--gris)}
+
+  /* ================= cuerpo ================= */
+  .cuerpo{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0}
+  .columna{
+    overflow-y:auto;padding:24px 28px 40px;
+    scrollbar-width:thin;scrollbar-color:var(--linea) transparent;
+  }
+  .columna::-webkit-scrollbar{width:8px}
+  .columna::-webkit-scrollbar-thumb{background:var(--linea)}
+  .izquierda{border-right:1px solid var(--linea)}
+
+  /* ================= piezas ================= */
+  .pieza{padding:20px 0;border-bottom:1px solid var(--linea)}
+  .pieza:first-child{padding-top:0}
+  .pieza:last-child{border-bottom:none}
+
+  .pieza-cab{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .num{font-weight:900;font-size:13px;color:var(--gris);letter-spacing:.06em;min-width:22px}
+  .pieza-tit{font-weight:700;font-size:17px;letter-spacing:-.01em}
+  .pieza-pie{display:block;color:var(--gris);font-size:13px;font-weight:400;letter-spacing:0;margin-top:2px}
+
+  .fichas{display:flex;flex-wrap:wrap;gap:8px}
+  .ficha{
+    border:1px solid var(--linea);padding:9px 14px;font-size:14px;
+    color:var(--blanco);text-align:left;
+    transition:border-color .15s ease,background .15s ease,color .15s ease;
+  }
+  .ficha:hover{border-color:rgba(255,255,255,.4)}
+  .ficha[aria-pressed="true"]{background:var(--blanco);color:var(--negro);border-color:var(--blanco)}
+  .ficha:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+
+  .libre{
+    width:100%;margin-top:8px;background:transparent;
+    border:1px solid var(--linea);color:var(--blanco);
+    padding:9px 14px;font-size:14px;resize:none;overflow:hidden;
+  }
+  .libre::placeholder{color:var(--gris)}
+  .libre:focus{outline:none;border-color:rgba(255,255,255,.4)}
+
+  .pieza.quinta .num,.pieza.quinta .pieza-tit{color:var(--ambar)}
+  .pieza.quinta .ficha[aria-pressed="true"]{background:var(--ambar);color:var(--negro);border-color:var(--ambar)}
+  .pieza.quinta .ficha:hover{border-color:var(--ambar)}
+
+  /* ================= salida ================= */
+  .bloque{margin-bottom:26px}
+  .etiqueta{
+    display:flex;align-items:center;gap:10px;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gris);margin-bottom:10px;
+  }
+  .etiqueta::after{content:"";flex:1;height:1px;background:var(--linea)}
+
+  .salida{
+    border:1px solid var(--linea);padding:18px 20px;
+    font-size:15px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+  }
+  .pobre{color:var(--gris)}
+  .bueno{border-color:rgba(255,255,255,.28);min-height:160px}
+  .bueno .vacio{color:var(--gris)}
+  .bueno .linea-quinta{color:var(--ambar)}
+
+  .aviso{
+    display:flex;gap:12px;align-items:flex-start;
+    margin-top:14px;padding:14px 16px;
+    background:var(--ambar-tenue);border-left:3px solid var(--ambar);
+    font-size:14px;line-height:1.5;
+  }
+  .aviso strong{color:var(--ambar);font-weight:700}
+  .aviso[hidden]{display:none}
+
+  .acciones{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .accion{
+    border:1px solid var(--linea);padding:11px 20px;
+    font-size:14px;font-weight:700;letter-spacing:.02em;
+    transition:border-color .15s ease,background .15s ease,color .15s ease;
+  }
+  .accion:hover{border-color:rgba(255,255,255,.45)}
+  .accion:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+  .accion.principal{background:var(--ambar);border-color:var(--ambar);color:var(--negro)}
+  .accion.principal:hover{background:#EBB65F;border-color:#EBB65F}
+  .accion[disabled]{opacity:.35;cursor:not-allowed}
+  .accion[disabled]:hover{border-color:var(--linea)}
+
+  .pie{margin-top:26px;color:var(--gris);font-size:12px;line-height:1.6}
+
+  /* ================= barra de pasos (solo móvil) ================= */
+  .pasos{
+    display:none;flex:none;
+    gap:10px;padding:12px 20px calc(12px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--linea);background:var(--negro);
+  }
+  .pasos .accion{flex:1;text-align:center;padding:14px 12px;font-size:15px}
+
+  /* ================= MODO MÓVIL ================= */
+  @media (max-width:900px){
+    .cabecera{padding:16px 20px 12px;flex-wrap:wrap;gap:8px}
+    .cabecera h1{font-size:18px}
+    .contador{margin-left:0;width:100%;font-size:12px}
+    .cuerpo{grid-template-columns:1fr}
+    .columna{padding:20px 20px 24px}
+    .izquierda{border-right:none}
+    .pasos{display:flex}
+
+    /* una pieza por pantalla */
+    .pieza{display:none;padding:0;border-bottom:none}
+    .pieza.activa{display:block}
+    .pieza-tit{font-size:20px}
+    .ficha{font-size:15px;padding:12px 16px;width:100%}
+    .libre{font-size:15px;padding:12px 16px}
+
+    /* la salida vive detrás de un botón */
+    .derecha{display:none}
+    body.ver-prompt .izquierda{display:none}
+    body.ver-prompt .derecha{display:block}
+    .bueno{min-height:120px}
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="marco">
+
+  <header class="cabecera">
+    <h1>Constructor de prompts</h1>
+    <div class="contador">
+      <span id="texto-contador">0 de 5 piezas</span>
+      <span class="pips" aria-hidden="true">
+        <span class="pip" data-pip="0"></span>
+        <span class="pip" data-pip="1"></span>
+        <span class="pip" data-pip="2"></span>
+        <span class="pip" data-pip="3"></span>
+        <span class="pip quinta" data-pip="4"></span>
+      </span>
+    </div>
+  </header>
+
+  <div class="cuerpo">
+    <section class="columna izquierda" id="piezas" aria-label="Las cinco piezas"></section>
+
+    <section class="columna derecha" aria-label="Resultado">
+      <div class="bloque">
+        <div class="etiqueta">Lo que escribirías</div>
+        <div class="salida pobre" id="pobre"></div>
+      </div>
+
+      <div class="bloque">
+        <div class="etiqueta">Lo que has construido</div>
+        <div class="salida bueno" id="bueno"></div>
+
+        <div class="aviso" id="aviso" hidden>
+          <span aria-hidden="true">·</span>
+          <span><strong>Te falta la quinta.</strong> Es la única que decide si aprendes algo o si te lo dan hecho.</span>
+        </div>
+
+        <div class="acciones">
+          <button class="accion principal" id="copiar" disabled>Copiar el prompt</button>
+          <button class="accion" id="limpiar">Empezar de nuevo</button>
+        </div>
+
+        <p class="pie">
+          Pégalo en cualquier asistente. Si te contesta con una pregunta en vez de con la respuesta,
+          lo has hecho bien.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <nav class="pasos" id="pasos" aria-label="Navegación entre piezas">
+    <button class="accion" id="atras">Atrás</button>
+    <button class="accion principal" id="siguiente">Siguiente</button>
+  </nav>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PROMPT_POBRE = "hazme un resumen de por qué se estropean las baterías del móvil";
+
+  var PIEZAS = [
+    {
+      titulo:"Quién eres tú",
+      pie:"Tu nivel real. Sin adornos.",
+      multiple:false,
+      libre:"Escribe tu nivel con tus palabras",
+      opciones:[
+        "Estoy en primero de un ciclo de grado medio.",
+        "Estoy en segundo y esto lo di el año pasado, pero no me acuerdo.",
+        "Estoy en un ciclo de grado superior.",
+        "Esto no lo he tocado en mi vida."
+      ]
+    },
+    {
+      titulo:"Qué quieres que sea ella",
+      pie:"El papel que le das. No le da conocimiento que no tenga, pero cambia cómo te habla.",
+      multiple:false,
+      libre:"Descríbelo tú",
+      opciones:[
+        "Quiero que hagas de profesor que me lo explica desde cero.",
+        "Quiero que hagas de compañero veterano del taller.",
+        "Quiero que me tomes la lección, como en un examen oral.",
+        "Quiero que hagas de corrector y me busques los fallos."
+      ]
+    },
+    {
+      titulo:"Qué le das",
+      pie:"El contexto. Sin esto contesta de memoria, y de memoria contesta regular.",
+      multiple:true,
+      libre:"Di qué le vas a pegar o describir",
+      opciones:[
+        "Te voy a pegar el enunciado del trabajo.",
+        "Te voy a pegar mis apuntes de clase.",
+        "Te voy a describir la máquina y la avería concreta.",
+        "Te cuento lo que ya he intentado y no me ha funcionado."
+      ]
+    },
+    {
+      titulo:"Qué te devuelve",
+      pie:"El formato. Puedes pedir todo lo que quieras.",
+      multiple:true,
+      libre:"Pide otro formato",
+      opciones:[
+        "Explícamelo en pasos cortos, de uno en uno.",
+        "Usa ejemplos de mi sector, no ejemplos genéricos.",
+        "No uses ningún tecnicismo que no me hayas explicado antes.",
+        "Máximo diez líneas."
+      ]
+    },
+    {
+      titulo:"Qué no hace",
+      pie:"La que casi nadie escribe.",
+      multiple:true,
+      quinta:true,
+      libre:"Prohíbele otra cosa",
+      opciones:[
+        "No me des la solución: dame una pista y déjame intentarlo.",
+        "No me lo escribas tú. El trabajo lo entrego yo.",
+        "No sigas hasta que yo te haya contestado.",
+        "No te inventes datos. Si no lo sabes, dilo."
+      ]
+    }
+  ];
+
+  var estado = PIEZAS.map(function(){ return {sel:[], libre:""}; });
+  var activa = 0;
+  var movil  = false;
+
+  var cont       = document.getElementById("piezas");
+  var elPobre    = document.getElementById("pobre");
+  var elBueno    = document.getElementById("bueno");
+  var elAviso    = document.getElementById("aviso");
+  var elContador = document.getElementById("texto-contador");
+  var btnCopiar  = document.getElementById("copiar");
+  var btnLimpiar = document.getElementById("limpiar");
+  var btnAtras   = document.getElementById("atras");
+  var btnSig     = document.getElementById("siguiente");
+  var pips       = [].slice.call(document.querySelectorAll(".pip"));
+
+  elPobre.textContent = PROMPT_POBRE;
+
+  /* ---------- pintar piezas ---------- */
+  PIEZAS.forEach(function(pieza,i){
+    var sec = document.createElement("div");
+    sec.className = "pieza" + (pieza.quinta ? " quinta" : "");
+
+    var cab = document.createElement("div");
+    cab.className = "pieza-cab";
+    cab.innerHTML =
+      '<span class="num">0'+(i+1)+'</span>'+
+      '<span class="pieza-tit">'+pieza.titulo+
+      '<span class="pieza-pie">'+pieza.pie+'</span></span>';
+    sec.appendChild(cab);
+
+    var fichas = document.createElement("div");
+    fichas.className = "fichas";
+    pieza.opciones.forEach(function(texto,j){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ficha";
+      b.textContent = texto;
+      b.setAttribute("aria-pressed","false");
+      b.addEventListener("click",function(){ alternar(i,j,pieza.multiple); });
+      fichas.appendChild(b);
+    });
+    sec.appendChild(fichas);
+
+    var ta = document.createElement("textarea");
+    ta.className = "libre";
+    ta.rows = 1;
+    ta.placeholder = pieza.libre;
+    ta.setAttribute("aria-label", pieza.titulo+" — texto libre");
+    ta.addEventListener("input",function(){
+      estado[i].libre = ta.value.trim();
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight+"px";
+      pintar();
+    });
+    sec.appendChild(ta);
+
+    cont.appendChild(sec);
+  });
+
+  var secciones  = [].slice.call(cont.children);
+  var todasFichas = secciones.map(function(s){
+    return [].slice.call(s.querySelectorAll(".ficha"));
+  });
+
+  /* ---------- selección ---------- */
+  function alternar(i,j,multiple){
+    var sel = estado[i].sel, pos = sel.indexOf(j);
+    if (pos > -1) sel.splice(pos,1);
+    else if (multiple){ sel.push(j); sel.sort(function(a,b){return a-b;}); }
+    else estado[i].sel = [j];
+
+    todasFichas[i].forEach(function(b,k){
+      b.setAttribute("aria-pressed", estado[i].sel.indexOf(k)>-1 ? "true":"false");
+    });
+    pintar();
+  }
+
+  function lineasDe(i){
+    var out = estado[i].sel.map(function(j){ return PIEZAS[i].opciones[j]; });
+    if (estado[i].libre) out.push(estado[i].libre);
+    return out;
+  }
+
+  function textoPlano(){
+    var partes = [];
+    for (var i=0;i<PIEZAS.length;i++){
+      var l = lineasDe(i);
+      if (l.length) partes.push(l.join(" "));
+    }
+    return partes.join("\n\n");
+  }
+
+  /* ---------- modo ---------- */
+  var mq = window.matchMedia("(max-width:900px)");
+  function ajustarModo(){
+    movil = mq.matches;
+    if (!movil){
+      document.body.classList.remove("ver-prompt");
+      secciones.forEach(function(s){ s.classList.remove("activa"); });
+    } else {
+      secciones.forEach(function(s,i){ s.classList.toggle("activa", i===activa); });
+    }
+    pintar();
+  }
+  if (mq.addEventListener) mq.addEventListener("change", ajustarModo);
+  else mq.addListener(ajustarModo);
+
+  function irA(i){
+    activa = Math.max(0, Math.min(PIEZAS.length-1, i));
+    secciones.forEach(function(s,k){ s.classList.toggle("activa", k===activa); });
+    document.body.classList.remove("ver-prompt");
+    cont.scrollTop = 0;
+    pintar();
+  }
+
+  btnAtras.addEventListener("click", function(){
+    if (document.body.classList.contains("ver-prompt")){
+      document.body.classList.remove("ver-prompt");
+      pintar();
+      return;
+    }
+    irA(activa-1);
+  });
+
+  btnSig.addEventListener("click", function(){
+    if (document.body.classList.contains("ver-prompt")) return;
+    if (activa < PIEZAS.length-1){ irA(activa+1); return; }
+    document.body.classList.add("ver-prompt");
+    pintar();
+    document.querySelector(".derecha").scrollTop = 0;
+  });
+
+  /* ---------- pintar todo ---------- */
+  function pintar(){
+    var hechas = 0;
+    for (var i=0;i<PIEZAS.length;i++){
+      var llena = lineasDe(i).length>0;
+      if (llena) hechas++;
+      pips[i].classList.toggle("on", llena);
+      pips[i].classList.toggle("aqui", movil && i===activa && !document.body.classList.contains("ver-prompt"));
+    }
+    elContador.textContent = hechas+" de 5 piezas";
+
+    elBueno.textContent = "";
+    if (hechas === 0){
+      var v = document.createElement("span");
+      v.className = "vacio";
+      v.textContent = "Ve eligiendo piezas. El prompt se escribe solo aquí.";
+      elBueno.appendChild(v);
+    } else {
+      for (var k=0;k<PIEZAS.length;k++){
+        var lineas = lineasDe(k);
+        if (!lineas.length) continue;
+        var p = document.createElement("span");
+        if (PIEZAS[k].quinta) p.className = "linea-quinta";
+        p.textContent = lineas.join(" ");
+        elBueno.appendChild(p);
+        if (k < PIEZAS.length-1) elBueno.appendChild(document.createTextNode("\n\n"));
+      }
+    }
+
+    elAviso.hidden = !(hechas>0 && lineasDe(4).length===0);
+    btnCopiar.disabled = hechas===0;
+
+    if (movil){
+      var viendo = document.body.classList.contains("ver-prompt");
+      btnAtras.disabled = !viendo && activa===0;
+      btnAtras.textContent = viendo ? "Volver a las piezas" : "Atrás";
+      btnSig.disabled = viendo;
+      btnSig.textContent = (activa === PIEZAS.length-1) ? "Ver el prompt" : "Siguiente";
+    }
+  }
+
+  /* ---------- acciones ---------- */
+  btnCopiar.addEventListener("click", function(){
+    var txt = textoPlano();
+    if (!txt) return;
+
+    function ok(){
+      btnCopiar.textContent = "Copiado";
+      setTimeout(function(){ btnCopiar.textContent = "Copiar el prompt"; }, 1600);
+    }
+    function respaldo(){
+      var ta = document.createElement("textarea");
+      ta.value = txt; ta.setAttribute("readonly","");
+      ta.style.position="fixed"; ta.style.top="-1000px";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); ok(); }
+      catch(e){ btnCopiar.textContent = "Selecciónalo y cópialo a mano"; }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(ok, respaldo);
+    } else respaldo();
+  });
+
+  btnLimpiar.addEventListener("click", function(){
+    estado = PIEZAS.map(function(){ return {sel:[], libre:""}; });
+    todasFichas.forEach(function(g){ g.forEach(function(b){ b.setAttribute("aria-pressed","false"); }); });
+    [].slice.call(cont.querySelectorAll(".libre")).forEach(function(ta){
+      ta.value=""; ta.style.height="auto";
+    });
+    if (movil) irA(0); else pintar();
+  });
+
+  ajustarModo();
+})();
+</script>
+</body>
+</html>
