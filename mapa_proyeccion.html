@@ -132,6 +132,8 @@ const ESCALA = MAPA / LADO;
 
 let datos = cargar();
 let animacion = null, actual = {cx:0, cy:0, w:0, h:0};
+let deHoja = {};          // {pregunta: [A,B,C,D]} leído de la hoja de cálculo
+let ultimaBuena = null;   // marca de tiempo de la última consulta con éxito
 
 /* ------------------------------ estado ------------------------------ */
 function cargar(){
@@ -372,9 +374,6 @@ function pinta(){
 }
 
 /* --------------------- lectura de la hoja de cálculo --------------------- */
-let deHoja = {};          // {pregunta: [A,B,C,D]}
-let ultimaBuena = null;   // marca de tiempo de la última consulta con éxito
-
 function urlGviz(){
   const g = HOJA.gid ? `&gid=${HOJA.gid}` : '';
   return `https://docs.google.com/spreadsheets/d/${HOJA.id}/gviz/tq?tqx=out:json${g}&_=${Date.now()}`;
