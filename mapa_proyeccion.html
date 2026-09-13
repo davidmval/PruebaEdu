@@ -40,6 +40,11 @@
   }
   .calc.mal{color:var(--rojo); border-color:var(--rojo);}
   .nivel{font-size:11px; width:52px; text-align:right; opacity:.85;}
+  .lineas{
+    font-size:11px; color:var(--secundario); border-top:1px solid var(--estructura);
+    padding-top:6px; line-height:1.5;
+  }
+  .lineas b{color:var(--acento); font-weight:700;}
   .estado{font-size:11px; color:var(--secundario); min-height:26px; line-height:1.3;}
   .botones{display:flex; gap:6px; margin-top:auto;}
   button{
@@ -64,10 +69,7 @@
 
   <div id="opciones"></div>
 
-  <div class="fila">
-    <label for="asistentes">Asistentes</label>
-    <input id="asistentes" type="text" inputmode="numeric" value="300">
-  </div>
+  <div class="lineas" id="lineas"></div>
 
   <div class="estado" id="estado"></div>
 
@@ -115,8 +117,8 @@ let animacion = null, actual = {cx:0, cy:0, w:0, h:0};
 
 /* ------------------------------ estado ------------------------------ */
 function cargar(){
-  try{ const v = JSON.parse(localStorage.getItem(CLAVE)); return v && v.preguntas ? v : {preguntas:{}, asistentes:300}; }
-  catch(e){ return {preguntas:{}, asistentes:300}; }
+  try{ const v = JSON.parse(localStorage.getItem(CLAVE)); return v && v.preguntas ? v : {preguntas:{}}; }
+  catch(e){ return {preguntas:{}}; }
 }
 function guardar(){
   try{ localStorage.setItem(CLAVE, JSON.stringify(datos)); }catch(e){}
@@ -126,14 +128,13 @@ function guardar(){
 const selPregunta = document.getElementById('pregunta');
 const divOpciones = document.getElementById('opciones');
 const divEstado   = document.getElementById('estado');
-const inpAsist    = document.getElementById('asistentes');
+const divLineas   = document.getElementById('lineas');
 
 for(let p=1; p<=12; p++){
   const o = document.createElement('option');
   o.value = p; o.textContent = 'P' + p;
   selPregunta.appendChild(o);
 }
-inpAsist.value = datos.asistentes || 300;
 
 divOpciones.innerHTML = LETRAS.map((L,k)=>`
   <div class="opcion">
@@ -224,21 +225,28 @@ function acumula(pesos, p, sumar){
   });
 }
 
-function globosPorBloque(){
-  const asist = parseFloat(inpAsist.value) || 300;
-  const bloques = [0,0,0];
+function lineasPorBloque(){
+  // porcentaje medio de elecciones que cruzan una línea, por bloque de cuatro preguntas
+  const suma = [0,0,0], cuenta = [0,0,0];
   for(const p in datos.preguntas){
     const idx = Math.floor((+p - 1) / 4);
     const pesos = datos.preguntas[p];
     const total = pesos.reduce((a,b)=> a + (b||0), 0);
     if(total <= 0) continue;
+    let marcado = 0;
     VECTORES[+p-1].forEach((v,k)=>{
-      if(v.nivel === 'roja' || v.nivel === 'ambar'){
-        bloques[idx] += (pesos[k]||0) / total * asist;
-      }
+      if(v.nivel === 'roja' || v.nivel === 'ambar') marcado += (pesos[k]||0);
     });
+    suma[idx] += marcado / total * 100;
+    cuenta[idx]++;
   }
-  return bloques.map(x => Math.round(x));
+  return suma.map((s,i)=> cuenta[i] ? Math.round(s / cuenta[i]) : null);
+}
+
+function pintaLineas(){
+  const b = lineasPorBloque();
+  const txt = b.map((v,i)=> `B${i+1} <b>${v===null ? '—' : v + '%'}</b>`).join(' · ');
+  divLineas.innerHTML = 'Líneas cruzadas: ' + txt;
 }
 
 /* ------------------------------ dibujo ------------------------------ */
@@ -315,10 +323,9 @@ function registrar(){
   const d = 100 - vals.reduce((a,b)=>a+b,0);
   if(d < -0.01) return;
   datos.preguntas[+selPregunta.value] = [vals[0], vals[1], vals[2], d];
-  datos.asistentes = parseFloat(inpAsist.value) || 300;
   guardar();
-  const g = globosPorBloque();
-  divEstado.innerHTML = `Registrada. Globos estimados por bloque: <b style="color:var(--acento)">${g[0]} · ${g[1]} · ${g[2]}</b>`;
+  pintaLineas();
+  divEstado.textContent = 'Registrada.';
   const siguiente = primeraSinResponder();
   selPregunta.value = siguiente;
   limpiaEntradas();
@@ -341,15 +348,15 @@ for(let k=0;k<3;k++){
   });
 }
 selPregunta.addEventListener('change', ()=>{ limpiaEntradas(); pintaNiveles(); refresca(); });
-inpAsist.addEventListener('input', ()=>{ datos.asistentes = parseFloat(inpAsist.value)||300; guardar(); });
 document.getElementById('guardar').addEventListener('click', registrar);
 document.getElementById('reset').addEventListener('click', ()=>{
   if(!confirm('¿Borrar todos los recuentos guardados?')) return;
-  datos = {preguntas:{}, asistentes: parseFloat(inpAsist.value)||300};
-  guardar(); selPregunta.value = 1; limpiaEntradas(); pintaNiveles(); refresca();
+  datos = {preguntas:{}};
+  guardar(); selPregunta.value = 1; limpiaEntradas(); pintaNiveles(); pintaLineas(); refresca();
 });
 
 pintaNiveles();
+pintaLineas();
 refresca();
 </script>
 </body>
