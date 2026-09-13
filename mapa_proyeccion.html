@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mapa de proyección · beta-0</title>
+<style>
+  :root{
+    --acento:#46C6C0; --estructura:#4A6A7A; --texto:#FFFFFF; --secundario:#C4C9CE;
+    --rojo:#E0403A; --ambar:#E0A340; --marron:#A67C52; --fondo:#0B0D0F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    width:760px; height:500px; overflow:hidden; background:transparent;
+    font-family:'Archivo',system-ui,-apple-system,sans-serif; color:var(--texto);
+    display:flex; gap:16px;
+  }
+  #lienzo{width:480px; height:480px; flex:0 0 480px;}
+  #panel{width:248px; display:flex; flex-direction:column; gap:8px; padding-top:2px;}
+
+  .prueba{
+    background:var(--rojo); color:#fff; font-size:10px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; padding:3px 6px; border-radius:3px;
+  }
+  .fila{display:flex; align-items:center; gap:6px;}
+  label{font-size:12px; color:var(--secundario); width:58px;}
+  select,input{
+    font-family:inherit; font-size:14px; background:#14181C; color:var(--texto);
+    border:1px solid var(--estructura); border-radius:4px; padding:4px 6px; width:100%;
+  }
+  select:focus,input:focus{outline:none; border-color:var(--acento);}
+  .opcion{display:flex; align-items:center; gap:6px;}
+  .letra{
+    font-size:16px; font-weight:700; color:var(--acento); width:16px; text-align:center;
+  }
+  .opcion input{width:56px; text-align:right;}
+  .pct{font-size:12px; color:var(--secundario); width:14px;}
+  .calc{
+    width:56px; text-align:right; padding:4px 6px; font-size:14px;
+    border:1px dashed var(--estructura); border-radius:4px; color:var(--acento);
+  }
+  .calc.mal{color:var(--rojo); border-color:var(--rojo);}
+  .nivel{font-size:11px; width:52px; text-align:right; opacity:.85;}
+  .estado{font-size:11px; color:var(--secundario); min-height:26px; line-height:1.3;}
+  .botones{display:flex; gap:6px; margin-top:auto;}
+  button{
+    font-family:inherit; font-size:12px; background:transparent; color:var(--secundario);
+    border:1px solid var(--estructura); border-radius:4px; padding:5px 8px; cursor:pointer;
+  }
+  button:hover{border-color:var(--acento); color:var(--acento);}
+  button.principal{border-color:var(--acento); color:var(--acento);}
+</style>
+</head>
+<body>
+
+<canvas id="lienzo" width="960" height="960"></canvas>
+
+<div id="panel">
+  <div class="prueba">Versión de prueba · vectores v1</div>
+
+  <div class="fila">
+    <label for="pregunta">Pregunta</label>
+    <select id="pregunta"></select>
+  </div>
+
+  <div id="opciones"></div>
+
+  <div class="fila">
+    <label for="asistentes">Asistentes</label>
+    <input id="asistentes" type="text" inputmode="numeric" value="300">
+  </div>
+
+  <div class="estado" id="estado"></div>
+
+  <div class="botones">
+    <button id="guardar" class="principal">Registrar (Intro)</button>
+    <button id="reset" title="Borra todos los datos guardados">Reiniciar</button>
+  </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   TABLA DE VECTORES — VERSIÓN DE PRUEBA
+   Son los vectores de preguntas_beta_v1. Se sustituyen enteros cuando
+   esté cerrada la v2 y la decisión D1. Es lo único que hay que tocar.
+   i = izquierda (decide el docente)   d = derecha (decide el sistema)
+   a = arriba (lo común)               b = abajo (cada trayectoria)
+   nivel: null | 'roja' | 'ambar' | 'marron'
+------------------------------------------------------------------- */
+const VECTORES = [
+  [ {i:1,d:0,a:2,b:0}, {i:0,d:3,a:0,b:3,nivel:'roja'}, {i:0,d:1,a:0,b:2}, {i:0,d:1,a:2,b:0} ],
+  [ {i:0,d:2,a:0,b:1}, {i:2,d:0,a:0,b:1}, {i:0,d:3,a:0,b:3,nivel:'ambar'}, {i:2,d:0,a:1,b:0} ],
+  [ {i:0,d:3,a:3,b:0,nivel:'roja'}, {i:2,d:0,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:0,d:2,a:1,b:0} ],
+  [ {i:1,d:0,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:0,d:3,a:3,b:0,nivel:'roja'}, {i:0,d:1,a:0,b:2} ],
+  [ {i:3,d:0,a:0,b:3,nivel:'marron'}, {i:1,d:0,a:2,b:0}, {i:0,d:1,a:0,b:2}, {i:1,d:0,a:0,b:2} ],
+  [ {i:0,d:3,a:0,b:3,nivel:'ambar'}, {i:1,d:0,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:1,d:0,a:0,b:2} ],
+  [ {i:2,d:0,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:0,d:3,a:3,b:0,nivel:'ambar'}, {i:2,d:0,a:1,b:0} ],
+  [ {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:2,d:0,a:0,b:1}, {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1} ],
+  [ {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:0,d:2,a:1,b:0} ],
+  [ {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:3,d:0,a:0,b:3,nivel:'roja'}, {i:0,d:2,a:1,b:0} ],
+  [ {i:0,d:3,a:0,b:3,nivel:'roja'}, {i:0,d:1,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:0,d:1,a:0,b:2} ],
+  [ {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:1,d:0,a:2,b:0}, {i:1,d:0,a:0,b:2}, {i:0,d:3,a:0,b:3,nivel:'roja'} ]
+];
+
+const LETRAS = ['A','B','C','D'];
+const COLOR_NIVEL = {roja:'var(--rojo)', ambar:'var(--ambar)', marron:'var(--marron)'};
+const CLAVE = 'beta0_recuentos_v1';
+const FINAL = new URLSearchParams(location.search).get('final') === '1';
+
+/* --- geometría del mapa (mapa_2400.jpg) --- */
+const LADO = 2400, ORIGEN = 1200, UNIDAD = 48;
+const ESCALA = 960 / LADO;                 // el lienzo muestra el mapa a 960
+
+let datos = cargar();
+let animacion = null, actual = {cx:0, cy:0, w:0, h:0};
+
+/* ------------------------------ estado ------------------------------ */
+function cargar(){
+  try{ const v = JSON.parse(localStorage.getItem(CLAVE)); return v && v.preguntas ? v : {preguntas:{}, asistentes:300}; }
+  catch(e){ return {preguntas:{}, asistentes:300}; }
+}
+function guardar(){
+  try{ localStorage.setItem(CLAVE, JSON.stringify(datos)); }catch(e){}
+}
+
+/* ------------------------------ interfaz ------------------------------ */
+const selPregunta = document.getElementById('pregunta');
+const divOpciones = document.getElementById('opciones');
+const divEstado   = document.getElementById('estado');
+const inpAsist    = document.getElementById('asistentes');
+
+for(let p=1; p<=12; p++){
+  const o = document.createElement('option');
+  o.value = p; o.textContent = 'P' + p;
+  selPregunta.appendChild(o);
+}
+inpAsist.value = datos.asistentes || 300;
+
+divOpciones.innerHTML = LETRAS.map((L,k)=>`
+  <div class="opcion">
+    <span class="letra">${L}</span>
+    ${k<3 ? `<input id="op${k}" type="text" inputmode="numeric" autocomplete="off">`
+          : `<span class="calc" id="op3">—</span>`}
+    <span class="pct">%</span>
+    <span class="nivel" id="niv${k}"></span>
+  </div>`).join('');
+
+function primeraSinResponder(){
+  for(let p=1; p<=12; p++) if(!datos.preguntas[p]) return p;
+  return 12;
+}
+selPregunta.value = primeraSinResponder();
+
+function pintaNiveles(){
+  const p = +selPregunta.value;
+  VECTORES[p-1].forEach((v,k)=>{
+    const el = document.getElementById('niv'+k);
+    if(v.nivel && FINAL){ el.textContent = v.nivel; el.style.color = COLOR_NIVEL[v.nivel]; }
+    else { el.textContent = ''; }
+  });
+}
+
+function leeEntradas(){
+  const vals = [];
+  for(let k=0;k<3;k++){
+    const t = document.getElementById('op'+k).value.trim().replace(',','.');
+    vals.push(t === '' ? null : parseFloat(t));
+  }
+  return vals;
+}
+
+function refresca(){
+  const vals = leeEntradas();
+  const puestos = vals.filter(v=>v!==null && !isNaN(v));
+  const elD = document.getElementById('op3');
+  let d = null;
+
+  if(puestos.length === 3){
+    d = 100 - puestos.reduce((a,b)=>a+b,0);
+    elD.textContent = (Math.round(d*10)/10) + '';
+    elD.classList.toggle('mal', d < -0.01);
+  } else {
+    elD.textContent = '—';
+    elD.classList.remove('mal');
+  }
+
+  const pesos = [vals[0], vals[1], vals[2], d];
+  dibuja(totales(pesos));
+
+  const n = pesos.filter(v=>v!==null && !isNaN(v) && v>=0).length;
+  if(d !== null && d < -0.01){
+    divEstado.innerHTML = '<span style="color:var(--rojo)">A + B + C pasan de 100.</span>';
+  } else {
+    divEstado.textContent = n < 4
+      ? `${n} de 4 opciones · el punto es la media de lo introducido`
+      : 'Las cuatro puestas. Pulsa Intro para registrar.';
+  }
+}
+
+/* --------------------------- cálculo del punto --------------------------- */
+function totales(pesosActuales){
+  let I=0, D=0, A=0, B=0;
+
+  // preguntas ya registradas
+  for(const p in datos.preguntas){
+    acumula(datos.preguntas[p], +p, (v)=>{ I+=v.i; D+=v.d; A+=v.a; B+=v.b; });
+  }
+  // la que se está tecleando, si no estaba ya registrada
+  const p = +selPregunta.value;
+  if(pesosActuales && !datos.preguntas[p]){
+    acumula(pesosActuales, p, (v)=>{ I+=v.i; D+=v.d; A+=v.a; B+=v.b; });
+  }
+  return {I,D,A,B};
+}
+
+function acumula(pesos, p, sumar){
+  const limpios = pesos.map(v => (v===null || isNaN(v) || v<0) ? null : v);
+  const total = limpios.reduce((a,b)=> a + (b||0), 0);
+  if(total <= 0) return;
+  limpios.forEach((w,k)=>{
+    if(w === null) return;
+    const f = w / total;                       // normalizado: 50/30 pesa igual que 5/3
+    const v = VECTORES[p-1][k];
+    sumar({i:v.i*f, d:v.d*f, a:v.a*f, b:v.b*f});
+  });
+}
+
+function globosPorBloque(){
+  const asist = parseFloat(inpAsist.value) || 300;
+  const bloques = [0,0,0];
+  for(const p in datos.preguntas){
+    const idx = Math.floor((+p - 1) / 4);
+    const pesos = datos.preguntas[p];
+    const total = pesos.reduce((a,b)=> a + (b||0), 0);
+    if(total <= 0) continue;
+    VECTORES[+p-1].forEach((v,k)=>{
+      if(v.nivel === 'roja' || v.nivel === 'ambar'){
+        bloques[idx] += (pesos[k]||0) / total * asist;
+      }
+    });
+  }
+  return bloques.map(x => Math.round(x));
+}
+
+/* ------------------------------ dibujo ------------------------------ */
+const lienzo = document.getElementById('lienzo');
+const ctx = lienzo.getContext('2d');
+const mapa = new Image();
+mapa.src = 'mapa_2400.jpg';
+mapa.onload = () => refresca();
+
+function dibuja(t){
+  const x = (t.D - t.I) / 2, y = (t.A - t.B) / 2;
+  const destino = {
+    cx: (ORIGEN + UNIDAD * x) * ESCALA,
+    cy: (ORIGEN - UNIDAD * y) * ESCALA,
+    w:  UNIDAD * (t.I + t.D) * ESCALA,
+    h:  UNIDAD * (t.A + t.B) * ESCALA
+  };
+  anima(destino);
+}
+
+function anima(destino){
+  if(animacion) cancelAnimationFrame(animacion);
+  const inicio = {...actual}, t0 = performance.now(), DUR = 600;
+  const suave = u => u<.5 ? 2*u*u : -1+(4-2*u)*u;
+  function paso(ahora){
+    const u = Math.min(1, (ahora - t0) / DUR), e = suave(u);
+    actual = {
+      cx: inicio.cx + (destino.cx - inicio.cx) * e,
+      cy: inicio.cy + (destino.cy - inicio.cy) * e,
+      w:  inicio.w  + (destino.w  - inicio.w)  * e,
+      h:  inicio.h  + (destino.h  - inicio.h)  * e
+    };
+    pinta();
+    if(u < 1) animacion = requestAnimationFrame(paso);
+  }
+  animacion = requestAnimationFrame(paso);
+}
+
+function pinta(){
+  const S = lienzo.width;
+  ctx.clearRect(0,0,S,S);
+  if(mapa.complete && mapa.naturalWidth) ctx.drawImage(mapa, 0, 0, S, S);
+
+  if(actual.w > 0.5 || actual.h > 0.5){
+    ctx.save();
+    ctx.strokeStyle = '#46C6C0'; ctx.lineWidth = 5;
+    ctx.fillStyle = 'rgba(70,198,192,0.13)';
+    ctx.shadowColor = 'rgba(70,198,192,0.6)'; ctx.shadowBlur = 18;
+    const x = actual.cx - actual.w/2, y = actual.cy - actual.h/2;
+    ctx.fillRect(x, y, actual.w, actual.h);
+    ctx.strokeRect(x, y, actual.w, actual.h);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#46C6C0';
+    ctx.beginPath(); ctx.arc(actual.cx, actual.cy, 9, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  if(FINAL){
+    ctx.save();
+    ctx.font = '600 26px Archivo, sans-serif'; ctx.fillStyle = '#C4C9CE';
+    ctx.textAlign = 'center';
+    ctx.fillText('LO COMÚN', S/2, 34);
+    ctx.fillText('CADA TRAYECTORIA', S/2, S-16);
+    ctx.textAlign = 'left';  ctx.fillText('DOCENTE', 14, S/2);
+    ctx.textAlign = 'right'; ctx.fillText('SISTEMA', S-14, S/2);
+    ctx.restore();
+  }
+}
+
+/* ------------------------------ eventos ------------------------------ */
+function registrar(){
+  const vals = leeEntradas();
+  if(vals.some(v => v===null || isNaN(v))) return;
+  const d = 100 - vals.reduce((a,b)=>a+b,0);
+  if(d < -0.01) return;
+  datos.preguntas[+selPregunta.value] = [vals[0], vals[1], vals[2], d];
+  datos.asistentes = parseFloat(inpAsist.value) || 300;
+  guardar();
+  const g = globosPorBloque();
+  divEstado.innerHTML = `Registrada. Globos estimados por bloque: <b style="color:var(--acento)">${g[0]} · ${g[1]} · ${g[2]}</b>`;
+  const siguiente = primeraSinResponder();
+  selPregunta.value = siguiente;
+  limpiaEntradas();
+  pintaNiveles();
+  dibuja(totales(null));
+  document.activeElement && document.activeElement.blur();   // devuelve el foco a Genially
+}
+
+function limpiaEntradas(){
+  for(let k=0;k<3;k++) document.getElementById('op'+k).value = '';
+  document.getElementById('op3').textContent = '—';
+}
+
+for(let k=0;k<3;k++){
+  const el = document.getElementById('op'+k);
+  el.addEventListener('input', refresca);
+  el.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); registrar(); }
+    /* las flechas NO se capturan: se dejan pasar a Genially */
+  });
+}
+selPregunta.addEventListener('change', ()=>{ limpiaEntradas(); pintaNiveles(); refresca(); });
+inpAsist.addEventListener('input', ()=>{ datos.asistentes = parseFloat(inpAsist.value)||300; guardar(); });
+document.getElementById('guardar').addEventListener('click', registrar);
+document.getElementById('reset').addEventListener('click', ()=>{
+  if(!confirm('¿Borrar todos los recuentos guardados?')) return;
+  datos = {preguntas:{}, asistentes: parseFloat(inpAsist.value)||300};
+  guardar(); selPregunta.value = 1; limpiaEntradas(); pintaNiveles(); refresca();
+});
+
+pintaNiveles();
+refresca();
+</script>
+</body>
+</html>
