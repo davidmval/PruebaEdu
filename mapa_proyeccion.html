@@ -363,7 +363,7 @@ async function consultaHoja(){
       const c = f.c || [];
       const q = valor(c[HOJA.col.pregunta]);
       const a = valor(c[HOJA.col.a]), b = valor(c[HOJA.col.b]), cc = valor(c[HOJA.col.c]);
-      const p = parseInt(q, 10);
+      const p = parseInt(String(q).replace(/[^0-9]/g, ''), 10);   // admite 'P1', '1', 'Pregunta 1'
       if(!p || p < 1 || p > 12) continue;
       const na = parseFloat(a), nb = parseFloat(b), nc = parseFloat(cc);
       if([na,nb,nc].some(v => isNaN(v))) continue;
