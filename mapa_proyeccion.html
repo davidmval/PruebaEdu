@@ -96,7 +96,7 @@
 const HOJA = {
   id:  '1KZhRFbCFuE4eImdrc8bR9AsngYF1endTVuxrkAk2Ho4',
   gid: '',            // vacío = primera pestaña. Si hay varias, poner el gid de la de respuestas
-  col: { pregunta:1, a:2, b:3, c:4 },
+  col: { marca:0, pregunta:1, a:2, b:3, c:4 },
   cada: 3000          // milisegundos entre consultas
 };
 
@@ -395,6 +395,10 @@ async function consultaHoja(){
     const nuevo = {};
     for(const f of filas){                       // se recorre en orden: gana la última fila
       const c = f.c || [];
+      if(LIMITE !== null){
+        const m = marcaEnMilis(c[HOJA.col.marca]);
+        if(m !== null && m < LIMITE) continue;      // fila de un ensayo anterior
+      }
       const q = valor(c[HOJA.col.pregunta]);
       const a = valor(c[HOJA.col.a]), b = valor(c[HOJA.col.b]), cc = valor(c[HOJA.col.c]);
       const p = parseInt(String(q).replace(/[^0-9]/g, ''), 10);   // admite 'P1', '1', 'Pregunta 1'
@@ -415,6 +419,28 @@ async function consultaHoja(){
 }
 
 function valor(celda){ return celda ? (celda.v !== undefined ? celda.v : celda.f) : null; }
+
+/* ?desde=hoy  o  ?desde=2026-11-20  → ignora las filas anteriores */
+function limiteDesde(){
+  const d = PARAMS.get('desde');
+  if(!d) return null;
+  if(d === 'hoy'){ const h = new Date(); h.setHours(0,0,0,0); return h.getTime(); }
+  const t = Date.parse(d);
+  return isNaN(t) ? null : t;
+}
+const LIMITE = limiteDesde();
+
+function marcaEnMilis(celda){
+  if(!celda) return null;
+  const v = celda.v;
+  if(typeof v === 'string' && v.startsWith('Date(')){
+    const n = v.slice(5, -1).split(',').map(x => parseInt(x, 10));
+    return new Date(n[0], n[1]||0, n[2]||1, n[3]||0, n[4]||0, n[5]||0).getTime();
+  }
+  if(v instanceof Date) return v.getTime();
+  const t = Date.parse(celda.f || v);
+  return isNaN(t) ? null : t;
+}
 
 function marcaFuente(ok){
   const el = document.getElementById('fuente');
