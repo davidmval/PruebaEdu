@@ -88,8 +88,8 @@
    Columnas esperadas (las del formulario): 0 marca temporal · 1 pregunta · 2 A · 3 B · 4 C
 ================================================================== */
 const HOJA = {
-  id:  '',            // el identificador largo de la URL de la hoja
-  gid: '0',           // pestaña
+  id:  '1KZhRFbCFuE4eImdrc8bR9AsngYF1endTVuxrkAk2Ho4',
+  gid: '',            // vacío = primera pestaña. Si hay varias, poner el gid de la de respuestas
   col: { pregunta:1, a:2, b:3, c:4 },
   cada: 3000          // milisegundos entre consultas
 };
@@ -347,7 +347,8 @@ let deHoja = {};          // {pregunta: [A,B,C,D]}
 let ultimaBuena = null;   // marca de tiempo de la última consulta con éxito
 
 function urlGviz(){
-  return `https://docs.google.com/spreadsheets/d/${HOJA.id}/gviz/tq?tqx=out:json&gid=${HOJA.gid}&_=${Date.now()}`;
+  const g = HOJA.gid ? `&gid=${HOJA.gid}` : '';
+  return `https://docs.google.com/spreadsheets/d/${HOJA.id}/gviz/tq?tqx=out:json${g}&_=${Date.now()}`;
 }
 
 async function consultaHoja(){
