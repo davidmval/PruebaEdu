@@ -15,6 +15,12 @@
     display:flex; gap:16px;
   }
   #lienzo{width:480px; height:480px; flex:0 0 480px;}
+
+  /* modo limpio (?panel=0): el mapa ocupa todo el iframe */
+  body.limpio{width:100vw; height:100vh; display:block; padding:0;}
+  body.limpio #lienzo{
+    width:100vmin; height:100vmin; flex:none; display:block; margin:0 auto;
+  }
   #panel{width:248px; display:flex; flex-direction:column; gap:8px; padding-top:2px;}
 
   .prueba{
@@ -485,7 +491,10 @@ window.addEventListener('storage', e => {
 });
 
 /* el panel se puede ocultar con ?panel=0, para la proyección limpia */
-if(PARAMS.get('panel') === '0') document.getElementById('panel').style.display = 'none';
+if(PARAMS.get('panel') === '0'){
+  document.getElementById('panel').style.display = 'none';
+  document.body.classList.add('limpio');
+}
 
 let yaReproducido = false;
 function primeraCarga(){
