@@ -132,8 +132,8 @@ const BLOQUE = parseInt(PARAMS.get('bloque'), 10) || null;
 
 /* --- geometría del mapa (mapa_2400.jpg) --- */
 const LADO = 2400, ORIGEN = 1200, UNIDAD = 48;
-const MARGEN = 46;                          // hueco para los rótulos de los ejes
-const MAPA   = 960 - MARGEN * 2;            // 868
+const MARGEN = FINAL ? 46 : 4;              // solo se reserva hueco si hay rótulos que pintar
+const MAPA   = 960 - MARGEN * 2;
 const ESCALA = MAPA / LADO;
 
 let datos = cargar();
@@ -365,7 +365,7 @@ function pinta(){
 
   if(FINAL){
     ctx.save();
-    ctx.font = '600 22px Archivo, sans-serif';
+    ctx.font = '600 26px Archivo, sans-serif';
     ctx.fillStyle = '#C4C9CE';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('LO COMÚN', S/2, MARGEN/2);
