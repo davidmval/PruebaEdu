@@ -274,7 +274,14 @@ function pintaLineas(){
 const lienzo = document.getElementById('lienzo');
 const ctx = lienzo.getContext('2d');
 const mapa = new Image();
+let mapaFallido = false;
 mapa.src = 'mapa_2400.jpg';
+mapa.onerror = () => {
+  mapaFallido = true;
+  const el = document.getElementById('fuente');
+  if(el){ el.textContent = 'No se encuentra mapa_2400.jpg'; el.style.color = 'var(--rojo)'; }
+  pinta();
+};
 mapa.onload = () => { if(!primeraCarga()) refresca(); };
 
 function dibuja(t, sinAnimar){
@@ -307,10 +314,32 @@ function anima(destino, sinAnimar){
   animacion = requestAnimationFrame(paso);
 }
 
+function planoDeRespaldo(){
+  // plano vacío para que la sesión siga si la imagen no carga
+  const o = MARGEN + ORIGEN * ESCALA, lado = LADO * ESCALA;
+  ctx.save();
+  ctx.fillStyle = '#0B0D0F';
+  ctx.fillRect(MARGEN, MARGEN, MAPA, MAPA);
+  ctx.strokeStyle = 'rgba(74,106,122,0.35)'; ctx.lineWidth = 1;
+  for(let u = -20; u <= 20; u += 5){
+    const q = MARGEN + (ORIGEN + u * UNIDAD) * ESCALA;
+    ctx.beginPath(); ctx.moveTo(q, MARGEN); ctx.lineTo(q, MARGEN + MAPA); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(MARGEN, q); ctx.lineTo(MARGEN + MAPA, q); ctx.stroke();
+  }
+  ctx.strokeStyle = '#4A6A7A'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(MARGEN, o); ctx.lineTo(MARGEN + MAPA, o); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(o, MARGEN); ctx.lineTo(o, MARGEN + MAPA); ctx.stroke();
+  ctx.restore();
+}
+
 function pinta(){
   const S = lienzo.width;
   ctx.clearRect(0,0,S,S);
-  if(mapa.complete && mapa.naturalWidth) ctx.drawImage(mapa, MARGEN, MARGEN, MAPA, MAPA);
+  if(mapa.complete && mapa.naturalWidth){
+    ctx.drawImage(mapa, MARGEN, MARGEN, MAPA, MAPA);
+  } else {
+    planoDeRespaldo();          // sin imagen, al menos los ejes y la rejilla
+  }
 
   if(actual.w > 0.5 || actual.h > 0.5){
     ctx.save();
