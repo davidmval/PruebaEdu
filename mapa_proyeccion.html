@@ -16,6 +16,21 @@
   }
   #lienzo{width:480px; height:480px; flex:0 0 480px;}
 
+  /* vista de móvil (?vista=lineas): solo las tres cifras */
+  body.solo-lineas{
+    width:100vw; height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px; background:#0B0D0F;
+  }
+  body.solo-lineas #lienzo, body.solo-lineas #panel{display:none;}
+  #resumen{display:none; text-align:center;}
+  body.solo-lineas #resumen{display:block;}
+  #resumen h1{font-size:20px; font-weight:600; color:var(--secundario); letter-spacing:.04em;
+    text-transform:uppercase; margin-bottom:26px;}
+  #resumen .b{margin-bottom:22px;}
+  #resumen .et{font-size:16px; color:var(--secundario);}
+  #resumen .n{font-size:64px; font-weight:700; color:var(--acento); line-height:1.05;}
+  #resumen .pie{font-size:13px; color:var(--secundario); margin-top:18px;}
+
   /* modo limpio (?panel=0): el mapa ocupa todo el iframe */
   body.limpio{width:100vw; height:100vh; display:block; padding:0;}
   body.limpio #lienzo{
@@ -64,6 +79,14 @@
 <body>
 
 <canvas id="lienzo" width="960" height="960"></canvas>
+
+<div id="resumen">
+  <h1>Líneas cruzadas</h1>
+  <div class="b"><div class="et">Bloque 1 · preguntas 1 a 4</div><div class="n" id="n1">—</div></div>
+  <div class="b"><div class="et">Bloque 2 · preguntas 5 a 8</div><div class="n" id="n2">—</div></div>
+  <div class="b"><div class="et">Bloque 3 · preguntas 9 a 12</div><div class="n" id="n3">—</div></div>
+  <div class="pie" id="pie3"></div>
+</div>
 
 <div id="panel">
   <div class="prueba">Versión de prueba · vectores v1</div>
@@ -276,6 +299,12 @@ function pintaLineas(){
   const b = lineasPorBloque();
   const txt = b.map((v,i)=> `B${i+1} <b>${v===null ? '—' : v + '%'}</b>`).join(' · ');
   divLineas.innerHTML = 'Líneas cruzadas: ' + txt;
+  for(let i=0;i<3;i++){
+    const el = document.getElementById('n'+(i+1));
+    if(el) el.textContent = b[i] === null ? '—' : b[i] + ' %';
+  }
+  const pie = document.getElementById('pie3');
+  if(pie) pie.textContent = 'Se actualiza solo · ' + new Date().toLocaleTimeString('es-ES');
 }
 
 /* ------------------------------ dibujo ------------------------------ */
@@ -517,6 +546,7 @@ window.addEventListener('storage', e => {
 });
 
 /* el panel se puede ocultar con ?panel=0, para la proyección limpia */
+if(PARAMS.get('vista') === 'lineas') document.body.classList.add('solo-lineas');
 if(PARAMS.get('panel') === '0'){
   document.getElementById('panel').style.display = 'none';
   document.body.classList.add('limpio');
