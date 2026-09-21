@@ -89,7 +89,7 @@
 </div>
 
 <div id="panel">
-  <div class="prueba">Versión de prueba · vectores v1</div>
+  
 
   <div class="fila">
     <label for="pregunta">Pregunta</label>
@@ -124,37 +124,40 @@ const HOJA = {
 };
 
 /* ------------------------------------------------------------------
-   TABLA DE VECTORES — VERSIÓN DE PRUEBA
-   Son los vectores de preguntas_beta_v1. Se sustituyen enteros cuando
-   esté cerrada la v2 y la decisión D1. Es lo único que hay que tocar.
+   TABLA DE VECTORES — VERSIÓN FINAL
+   Generada desde 02_preguntas_final_beta0. Umbral de esquina: |x|+|y| >= 14.
    i = izquierda (decide el docente)   d = derecha (decide el sistema)
    a = arriba (lo común)               b = abajo (cada trayectoria)
    nivel: null | 'roja' | 'ambar' | 'marron'
 ------------------------------------------------------------------- */
 const VECTORES = [
   [ {i:1,d:0,a:2,b:0}, {i:0,d:3,a:0,b:3,nivel:'roja'}, {i:0,d:1,a:0,b:2}, {i:0,d:1,a:2,b:0} ],
-  [ {i:0,d:2,a:0,b:1}, {i:2,d:0,a:0,b:1}, {i:0,d:3,a:0,b:3,nivel:'ambar'}, {i:2,d:0,a:1,b:0} ],
+  [ {i:2,d:0,a:0,b:1}, {i:0,d:2,a:1,b:0}, {i:0,d:3,a:0,b:3,nivel:'ambar'}, {i:2,d:0,a:1,b:0} ],
   [ {i:0,d:3,a:3,b:0,nivel:'roja'}, {i:2,d:0,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:0,d:2,a:1,b:0} ],
-  [ {i:1,d:0,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:0,d:3,a:3,b:0,nivel:'roja'}, {i:0,d:1,a:0,b:2} ],
-  [ {i:3,d:0,a:0,b:3,nivel:'marron'}, {i:1,d:0,a:2,b:0}, {i:0,d:1,a:0,b:2}, {i:1,d:0,a:0,b:2} ],
-  [ {i:0,d:3,a:0,b:3,nivel:'ambar'}, {i:1,d:0,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:1,d:0,a:0,b:2} ],
-  [ {i:2,d:0,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:0,d:3,a:3,b:0,nivel:'ambar'}, {i:2,d:0,a:1,b:0} ],
-  [ {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:2,d:0,a:0,b:1}, {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1} ],
-  [ {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:0,d:2,a:1,b:0} ],
-  [ {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:3,d:0,a:0,b:3,nivel:'roja'}, {i:0,d:2,a:1,b:0} ],
-  [ {i:0,d:3,a:0,b:3,nivel:'roja'}, {i:0,d:1,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:0,d:1,a:0,b:2} ],
-  [ {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:1,d:0,a:2,b:0}, {i:1,d:0,a:0,b:2}, {i:0,d:3,a:0,b:3,nivel:'roja'} ]
+  [ {i:1,d:0,a:2,b:0}, {i:0,d:1,a:2,b:0}, {i:0,d:3,a:3,b:0,nivel:'ambar'}, {i:0,d:1,a:0,b:2} ],
+  [ {i:3,d:0,a:0,b:3,nivel:'marron'}, {i:0,d:1,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:0,d:1,a:0,b:2} ],
+  [ {i:0,d:3,a:0,b:3,nivel:'ambar'}, {i:1,d:0,a:2,b:0}, {i:0,d:1,a:2,b:0}, {i:1,d:0,a:0,b:2} ],
+  [ {i:2,d:0,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:0,d:3,a:3,b:0,nivel:'ambar'}, {i:0,d:2,a:1,b:0} ],
+  [ {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:2,d:0,a:0,b:1}, {i:0,d:2,a:1,b:0}, {i:0,d:2,a:0,b:1} ],
+  [ {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:3,d:0,a:3,b:0,nivel:'marron'}, {i:2,d:0,a:1,b:0} ],
+  [ {i:0,d:2,a:1,b:0}, {i:2,d:0,a:0,b:1}, {i:3,d:0,a:0,b:3,nivel:'roja'}, {i:0,d:2,a:0,b:1} ],
+  [ {i:0,d:3,a:0,b:3,nivel:'roja'}, {i:0,d:1,a:2,b:0}, {i:1,d:0,a:2,b:0}, {i:1,d:0,a:0,b:2} ],
+  [ {i:1,d:0,a:2,b:0}, {i:0,d:1,a:2,b:0}, {i:1,d:0,a:0,b:2}, {i:0,d:3,a:0,b:3,nivel:'marron'} ]
 ];
 
 const LETRAS = ['A','B','C','D'];
 const COLOR_NIVEL = {roja:'var(--rojo)', ambar:'var(--ambar)', marron:'var(--marron)'};
-const CLAVE = 'beta0_recuentos_v1';
+const CLAVE = 'beta0_recuentos_final';
 const PARAMS = new URLSearchParams(location.search);
 const FINAL  = PARAMS.get('final') === '1';
 const BLOQUE = parseInt(PARAMS.get('bloque'), 10) || null;
 
 /* --- geometría del mapa (mapa_2400.jpg) --- */
-const LADO = 2400, ORIGEN = 1200, UNIDAD = 48;
+const LADO = 2400, ORIGEN = 1200;
+const SEMIPLANO   = 12;                 // el plano va de -12 a +12: lo que la gente alcanza de verdad
+const UNIDAD_POS  = 960 / SEMIPLANO;    // 80 px por unidad para situar el punto
+const UNIDAD_RECT = 48;                 // el rectángulo conserva su escala: 18 x 18 = 864 px
+const UNIDAD = UNIDAD_POS;
 const MARGEN = FINAL ? 46 : 4;              // solo se reserva hueco si hay rótulos que pintar
 const MAPA   = 960 - MARGEN * 2;
 const ESCALA = MAPA / LADO;
@@ -323,11 +326,12 @@ mapa.onload = () => { if(!primeraCarga()) refresca(); };
 
 function dibuja(t, sinAnimar){
   const x = (t.D - t.I) / 2, y = (t.A - t.B) / 2;
+  const lim = v => Math.max(-SEMIPLANO, Math.min(SEMIPLANO, v));   // el punto nunca sale del plano
   const destino = {
-    cx: MARGEN + (ORIGEN + UNIDAD * x) * ESCALA,
-    cy: MARGEN + (ORIGEN - UNIDAD * y) * ESCALA,
-    w:  UNIDAD * (t.I + t.D) * ESCALA,
-    h:  UNIDAD * (t.A + t.B) * ESCALA
+    cx: MARGEN + (ORIGEN + UNIDAD_POS * lim(x)) * ESCALA,
+    cy: MARGEN + (ORIGEN - UNIDAD_POS * lim(y)) * ESCALA,
+    w:  UNIDAD_RECT * (t.I + t.D) * ESCALA,
+    h:  UNIDAD_RECT * (t.A + t.B) * ESCALA
   };
   anima(destino, sinAnimar);
 }
@@ -358,8 +362,8 @@ function planoDeRespaldo(){
   ctx.fillStyle = '#0B0D0F';
   ctx.fillRect(MARGEN, MARGEN, MAPA, MAPA);
   ctx.strokeStyle = 'rgba(74,106,122,0.35)'; ctx.lineWidth = 1;
-  for(let u = -20; u <= 20; u += 5){
-    const q = MARGEN + (ORIGEN + u * UNIDAD) * ESCALA;
+  for(let u = -SEMIPLANO; u <= SEMIPLANO; u += 3){
+    const q = MARGEN + (ORIGEN + u * UNIDAD_POS) * ESCALA;
     ctx.beginPath(); ctx.moveTo(q, MARGEN); ctx.lineTo(q, MARGEN + MAPA); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(MARGEN, q); ctx.lineTo(MARGEN + MAPA, q); ctx.stroke();
   }
