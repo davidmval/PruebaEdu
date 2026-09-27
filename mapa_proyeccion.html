@@ -152,6 +152,22 @@ const PARAMS = new URLSearchParams(location.search);
 const FINAL  = PARAMS.get('final') === '1';
 const BLOQUE = parseInt(PARAMS.get('bloque'), 10) || null;
 
+/* --- borrado total con ?reset=1 ---------------------------------------
+   Hay DOS almacenes: CLAVE, con lo tecleado a mano en el panel, y
+   CLAVE+'_hoja', que es la copia de seguridad de la hoja de cálculo.
+   El botón Reiniciar solo vaciaba el primero, y en la vista de líneas el
+   panel va oculto, así que no había forma de vaciar nada desde el iframe.
+   Con ?reset=1 se borran los dos antes de que se pinte nada.
+   Ojo: el navegador da a cada iframe su propio almacén segun la página que
+   lo contiene, así que borrar desde una pestaña suelta NO vacía el iframe
+   de Genially. Hay que pasar el parámetro donde esté el dato. */
+if(PARAMS.get('reset') === '1'){
+  try{
+    localStorage.removeItem(CLAVE);
+    localStorage.removeItem(CLAVE + '_hoja');
+  }catch(e){}
+}
+
 /* --- geometría del mapa (mapa_2400.jpg) --- */
 const LADO = 2400, ORIGEN = 1200;
 const SEMIPLANO   = 12;                 // el plano va de -12 a +12: lo que la gente alcanza de verdad
@@ -523,6 +539,8 @@ document.getElementById('guardar').addEventListener('click', registrar);
 document.getElementById('reset').addEventListener('click', ()=>{
   if(!confirm('¿Borrar todos los recuentos guardados?')) return;
   datos = {preguntas:{}};
+  deHoja = {};
+  try{ localStorage.removeItem(CLAVE + '_hoja'); }catch(e){}   // también la copia de la hoja
   guardar(); selPregunta.value = 1; limpiaEntradas(); pintaNiveles(); pintaLineas(); refresca();
 });
 
